@@ -1,5 +1,8 @@
+import 'package:base_clean_arch_bloc/src/app/features/auth/infrastructure/auth_interceptor.dart';
+import 'package:base_clean_arch_bloc/src/core/cache/shared_preferences/shared_preferences_impl.dart';
 import 'package:base_clean_arch_bloc/src/core/client_http/dio/rest_client_dio_impl.dart';
 import 'package:base_clean_arch_bloc/src/core/client_http/logger/client_interceptor_logger_impl.dart';
+import 'package:base_clean_arch_bloc/src/core/services/session_service.dart';
 import 'package:get_it/get_it.dart';
 
 final injector = GetIt.instance;
@@ -10,10 +13,20 @@ void setupDependencyInjector({bool loggerApi = false}) {
       dio: DioFactory.dio(),
     );
 
+    instance.addInterceptors(AuthInterceptor(
+      sessionService: injector<SessionService>(),
+    ));
+
     if (loggerApi) {
       instance.addInterceptors(ClientInterceptorLoggerImpl());
     }
 
     return instance;
+  });
+
+  injector.registerLazySingleton<SessionService>(() {
+    return SessionService(
+      sharedPreferencesImpl: SharedPreferencesImpl(),
+    );
   });
 }
