@@ -1,6 +1,6 @@
 # Base Clean Architecture + BLoC
 
-Um projeto Flutter implementando Clean Architecture com BLoC para gerenciamento de estado, seguindo os princípios de SOLID e separação de responsabilidades.
+Um projeto base Flutter implementando Clean Architecture com BLoC para gerenciamento de estado, seguindo os princípios de SOLID e separação de responsabilidades.
 
 ## 🏗️ Arquitetura
 
@@ -173,7 +173,7 @@ flutter build web
 
 ## 📋 Próximos Passos
 
-- [ ] Implementar testes unitários completos
+- [ ] Implementar docs IA ready
 - [ ] Configurar CI/CD pipeline
 - [ ] Documentação de APIs
 - [ ] Implementar cache com estratégias avançadas
