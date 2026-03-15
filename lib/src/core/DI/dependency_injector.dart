@@ -43,5 +43,10 @@ void setupDependencyInjector({bool loggerApi = false}) {
 
   injector.registerLazySingleton<IAuthRepository>(() => AuthRepositoryImpl(authRemoteDatasource: injector<AuthRemoteDatasource>()));
 
-  injector.registerLazySingleton(() => AuthBloc(loginUsecase: LoginUsecase(authRepository: injector<IAuthRepository>())));
+  injector.registerLazySingleton(() => AuthBloc(
+        loginUsecase: LoginUsecase(
+          authRepository: injector<IAuthRepository>(),
+          sessionService: injector<SessionService>(),
+        ),
+      ));
 }
