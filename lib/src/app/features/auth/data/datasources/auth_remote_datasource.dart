@@ -1,5 +1,6 @@
 import 'package:base_clean_arch_bloc/src/app/features/auth/domain/dtos/login_params.dart';
 import 'package:base_clean_arch_bloc/src/core/client_http/client_http.dart';
+import 'package:base_clean_arch_bloc/src/core/utils/endpoints.dart';
 
 class AuthRemoteDatasource {
   final IRestClient _restClient;
@@ -9,7 +10,7 @@ class AuthRemoteDatasource {
   Future<RestClientResponse> login(LoginParams params) => //
       _restClient.post(
         RestClientRequest(
-          path: 'https://127.0.0.1:8000/api/auth/login',
+          path: Endpoints.login,
           data: params.toJson(),
         ),
       );
