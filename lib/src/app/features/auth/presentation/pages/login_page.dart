@@ -1,3 +1,4 @@
+import 'package:base_clean_arch_bloc/routes.dart';
 import 'package:base_clean_arch_bloc/src/app/features/auth/domain/dtos/login_params.dart';
 import 'package:base_clean_arch_bloc/src/app/features/auth/domain/validators/login_params_validators.dart';
 import 'package:base_clean_arch_bloc/src/app/features/auth/presentation/bloc/auth_bloc.dart';
@@ -42,6 +43,7 @@ class _LoginPageState extends State<LoginPage> {
         listener: (context, state) {
           if (state is AuthLoginSuccess) {
             showMessageSnackBar(context, 'Login realizado com sucesso!', icon: Icons.check_circle, iconColor: Colors.green, textColor: Colors.white);
+            router.go('/home');
           }
           if (state is AuthLoginFailure) {
             showMessageSnackBar(context, state.exception.message, icon: Icons.error, iconColor: Colors.red, textColor: Colors.white);
