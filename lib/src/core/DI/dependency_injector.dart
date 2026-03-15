@@ -1,5 +1,6 @@
 import 'package:base_clean_arch_bloc/src/app/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:base_clean_arch_bloc/src/app/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:base_clean_arch_bloc/src/app/features/auth/data/repositories/auth_repository_mock.dart';
 import 'package:base_clean_arch_bloc/src/app/features/auth/domain/repositories/auth_repository_interface.dart';
 import 'package:base_clean_arch_bloc/src/app/features/auth/domain/usecases/login_usecase.dart';
 import 'package:base_clean_arch_bloc/src/app/features/auth/infrastructure/auth_interceptor.dart';
@@ -12,7 +13,7 @@ import 'package:get_it/get_it.dart';
 
 final injector = GetIt.instance;
 
-void setupDependencyInjector({bool loggerApi = false}) {
+void setupDependencyInjector({bool loggerApi = false, bool useMocks = true}) {
   injector.registerFactory<RestClientDioImpl>(() {
     final instance = RestClientDioImpl(
       dio: DioFactory.dio(),
@@ -41,7 +42,11 @@ void setupDependencyInjector({bool loggerApi = false}) {
     );
   });
 
-  injector.registerLazySingleton<IAuthRepository>(() => AuthRepositoryImpl(authRemoteDatasource: injector<AuthRemoteDatasource>()));
+  if (useMocks) {
+    injector.registerLazySingleton<IAuthRepository>(() => AuthRepositoryMock());
+  } else {
+    injector.registerLazySingleton<IAuthRepository>(() => AuthRepositoryImpl(authRemoteDatasource: injector<AuthRemoteDatasource>()));
+  }
 
   injector.registerLazySingleton(() => AuthBloc(
         loginUsecase: LoginUsecase(
