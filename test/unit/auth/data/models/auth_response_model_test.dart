@@ -5,13 +5,13 @@ import 'package:base_clean_arch_bloc/src/app/features/auth/domain/entities/auth_
 
 void main() {
   group('AuthResponseModel', () {
-    final userModel = UserModel(
+    const userModel = UserModel(
       id: '1',
       email: 'test@example.com',
       name: 'Test User',
     );
 
-    final authResponseModel = AuthResponseModel(
+    const authResponseModel = AuthResponseModel(
       user: userModel,
       token: 'test_token_123',
     );

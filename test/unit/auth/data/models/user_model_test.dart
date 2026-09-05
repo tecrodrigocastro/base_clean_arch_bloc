@@ -5,7 +5,7 @@ import 'package:base_clean_arch_bloc/src/app/features/auth/domain/entities/user_
 
 void main() {
   group('UserModel', () {
-    final userModel = UserModel(
+    const userModel = UserModel(
       id: '1',
       email: 'test@example.com',
       name: 'Test User',

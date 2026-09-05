@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:base_clean_arch_bloc/src/core/client_http/client_http.dart';
 import 'package:base_clean_arch_bloc/src/core/client_http/dio/client_interceptor_dio_impl.dart';
 import 'package:base_clean_arch_bloc/src/core/client_http/dio/dio_adapter.dart';
@@ -124,7 +126,7 @@ class RestClientDioImpl implements IRestClient {
       );
       return DioAdapter.toClientResponse(response);
     } on DioException catch (e) {
-      print(e.message);
+      log(e.message ?? 'DioException', name: 'RestClientDioImpl', error: e);
       throw DioAdapter.toClientException(e);
     }
   }

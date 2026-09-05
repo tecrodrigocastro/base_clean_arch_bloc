@@ -41,13 +41,13 @@ void main() {
         password: 'Password123!',
       );
 
-      final user = UserEntity(
+      const user = UserEntity(
         id: '1',
         email: 'test@example.com',
         name: 'Test User',
       );
 
-      final authResponse = AuthResponseEntity(
+      const authResponse = AuthResponseEntity(
         user: user,
         token: 'test_token_123',
       );
@@ -56,13 +56,13 @@ void main() {
         'emits [AuthLoading, AuthLoginSuccess] when login succeeds',
         build: () {
           when(() => mockLoginUsecase.call(any()))
-              .thenAnswer((_) async => Success(authResponse));
+              .thenAnswer((_) async => const Success(authResponse));
           return authBloc;
         },
         act: (bloc) => bloc.add(AuthLoginRequested(params: loginParams)),
         expect: () => [
           AuthLoading(),
-          AuthLoginSuccess(authResponse),
+          const AuthLoginSuccess(authResponse),
         ],
         verify: (_) {
           verify(() => mockLoginUsecase.call(loginParams)).called(1);
@@ -72,9 +72,9 @@ void main() {
       blocTest<AuthBloc, AuthState>(
         'emits [AuthLoading, AuthLoginFailure] when login fails with DefaultException',
         build: () {
-          final exception = DefaultException(message: 'Login failed');
+          const exception = DefaultException(message: 'Login failed');
           when(() => mockLoginUsecase.call(any()))
-              .thenAnswer((_) async => Failure(exception));
+              .thenAnswer((_) async => const Failure(exception));
           return authBloc;
         },
         act: (bloc) => bloc.add(AuthLoginRequested(params: loginParams)),
@@ -139,7 +139,7 @@ void main() {
         'calls usecase with correct parameters',
         build: () {
           when(() => mockLoginUsecase.call(any()))
-              .thenAnswer((_) async => Success(authResponse));
+              .thenAnswer((_) async => const Success(authResponse));
           return authBloc;
         },
         act: (bloc) => bloc.add(AuthLoginRequested(params: loginParams)),
@@ -155,7 +155,7 @@ void main() {
         'handles multiple login requests correctly',
         build: () {
           when(() => mockLoginUsecase.call(any()))
-              .thenAnswer((_) async => Success(authResponse));
+              .thenAnswer((_) async => const Success(authResponse));
           return authBloc;
         },
         act: (bloc) async {
@@ -165,9 +165,9 @@ void main() {
         },
         expect: () => [
           AuthLoading(),
-          AuthLoginSuccess(authResponse),
+          const AuthLoginSuccess(authResponse),
           AuthLoading(),
-          AuthLoginSuccess(authResponse),
+          const AuthLoginSuccess(authResponse),
         ],
         verify: (_) {
           verify(() => mockLoginUsecase.call(loginParams)).called(2);
@@ -178,10 +178,6 @@ void main() {
         blocTest<AuthBloc, AuthState>(
           'emits failure when email is invalid',
           build: () {
-            final invalidParams = LoginParams(
-              email: 'invalid-email',
-              password: 'Password123!',
-            );
             final exception = CredentialsValidationException(message: 'Email inválido');
             when(() => mockLoginUsecase.call(any()))
                 .thenAnswer((_) async => Failure(exception));
@@ -206,10 +202,6 @@ void main() {
         blocTest<AuthBloc, AuthState>(
           'emits failure when password is invalid',
           build: () {
-            final invalidParams = LoginParams(
-              email: 'test@example.com',
-              password: '123',
-            );
             final exception = CredentialsValidationException(message: 'Senha inválida');
             when(() => mockLoginUsecase.call(any()))
                 .thenAnswer((_) async => Failure(exception));
@@ -237,13 +229,13 @@ void main() {
           'transitions from AuthInitial to AuthLoading to AuthLoginSuccess',
           build: () {
             when(() => mockLoginUsecase.call(any()))
-                .thenAnswer((_) async => Success(authResponse));
+                .thenAnswer((_) async => const Success(authResponse));
             return authBloc;
           },
           act: (bloc) => bloc.add(AuthLoginRequested(params: loginParams)),
           expect: () => [
             AuthLoading(),
-            AuthLoginSuccess(authResponse),
+            const AuthLoginSuccess(authResponse),
           ],
           verify: (_) {
             // Verify state transitions are correct
@@ -255,14 +247,14 @@ void main() {
           'transitions from AuthLoginSuccess back to AuthLoading on new request',
           build: () {
             when(() => mockLoginUsecase.call(any()))
-                .thenAnswer((_) async => Success(authResponse));
+                .thenAnswer((_) async => const Success(authResponse));
             return authBloc;
           },
-          seed: () => AuthLoginSuccess(authResponse),
+          seed: () => const AuthLoginSuccess(authResponse),
           act: (bloc) => bloc.add(AuthLoginRequested(params: loginParams)),
           expect: () => [
             AuthLoading(),
-            AuthLoginSuccess(authResponse),
+            const AuthLoginSuccess(authResponse),
           ],
         );
 
@@ -270,16 +262,16 @@ void main() {
           'transitions from AuthLoginFailure back to AuthLoading on new request',
           build: () {
             when(() => mockLoginUsecase.call(any()))
-                .thenAnswer((_) async => Success(authResponse));
+                .thenAnswer((_) async => const Success(authResponse));
             return authBloc;
           },
-          seed: () => AuthLoginFailure(
+          seed: () => const AuthLoginFailure(
             exception: DefaultException(message: 'Previous error'),
           ),
           act: (bloc) => bloc.add(AuthLoginRequested(params: loginParams)),
           expect: () => [
             AuthLoading(),
-            AuthLoginSuccess(authResponse),
+            const AuthLoginSuccess(authResponse),
           ],
         );
       });
@@ -305,9 +297,9 @@ void main() {
         blocTest<AuthBloc, AuthState>(
           'handles network timeout errors',
           build: () {
-            final exception = DefaultException(message: 'Network timeout');
+            const exception = DefaultException(message: 'Network timeout');
             when(() => mockLoginUsecase.call(any()))
-                .thenAnswer((_) async => Failure(exception));
+                .thenAnswer((_) async => const Failure(exception));
             return authBloc;
           },
           act: (bloc) => bloc.add(AuthLoginRequested(params: loginParams)),
@@ -341,23 +333,23 @@ void main() {
 
     group('AuthState props', () {
       test('AuthLoginSuccess should have correct props', () {
-        final user = UserEntity(id: '1', email: 'test@example.com', name: 'Test');
-        final authResponse1 = AuthResponseEntity(user: user, token: 'token1');
-        final authResponse2 = AuthResponseEntity(user: user, token: 'token2');
+        const user = UserEntity(id: '1', email: 'test@example.com', name: 'Test');
+        const authResponse1 = AuthResponseEntity(user: user, token: 'token1');
+        const authResponse2 = AuthResponseEntity(user: user, token: 'token2');
 
-        final state1 = AuthLoginSuccess(authResponse1);
-        final state2 = AuthLoginSuccess(authResponse2);
+        const state1 = AuthLoginSuccess(authResponse1);
+        const state2 = AuthLoginSuccess(authResponse2);
 
         expect(state1.props, equals([authResponse1]));
         expect(state1.props, isNot(equals(state2.props)));
       });
 
       test('AuthLoginFailure should have correct props', () {
-        final exception1 = DefaultException(message: 'Error 1');
-        final exception2 = DefaultException(message: 'Error 2');
+        const exception1 = DefaultException(message: 'Error 1');
+        const exception2 = DefaultException(message: 'Error 2');
 
-        final state1 = AuthLoginFailure(exception: exception1);
-        final state2 = AuthLoginFailure(exception: exception2);
+        const state1 = AuthLoginFailure(exception: exception1);
+        const state2 = AuthLoginFailure(exception: exception2);
 
         expect(state1.props, equals([exception1]));
         expect(state1.props, isNot(equals(state2.props)));
