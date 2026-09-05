@@ -5,20 +5,30 @@ import 'package:base_clean_arch_bloc/src/app/features/auth/domain/repositories/a
 import 'package:base_clean_arch_bloc/src/app/features/auth/domain/usecases/login_usecase.dart';
 import 'package:base_clean_arch_bloc/src/core/errors/default_exception.dart';
 import 'package:base_clean_arch_bloc/src/core/errors/unauthorized_exception.dart';
+import 'package:base_clean_arch_bloc/src/core/services/session_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:result_dart/result_dart.dart';
 
 class MockAuthRepository extends Mock implements IAuthRepository {}
 
+class MockSessionService extends Mock implements SessionService {}
+
 void main() {
   group('LoginUsecase', () {
     late LoginUsecase usecase;
     late MockAuthRepository mockAuthRepository;
+    late MockSessionService mockSessionService;
+
+    setUpAll(() {
+      registerFallbackValue(LoginParams.empty());
+    });
 
     setUp(() {
       mockAuthRepository = MockAuthRepository();
-      usecase = LoginUsecase(authRepository: mockAuthRepository);
+      mockSessionService = MockSessionService();
+      when(() => mockSessionService.saveSession(any())).thenAnswer((_) async => true);
+      usecase = LoginUsecase(authRepository: mockAuthRepository, sessionService: mockSessionService);
     });
 
     group('call', () {
@@ -27,20 +37,20 @@ void main() {
         password: 'password123',
       );
 
-      final user = UserEntity(
+      const user = UserEntity(
         id: '1',
         email: 'test@example.com',
         name: 'Test User',
       );
 
-      final authResponse = AuthResponseEntity(
+      const authResponse = AuthResponseEntity(
         user: user,
         token: 'test_token_123',
       );
 
       test('should return AuthResponseEntity when repository call succeeds', () async {
         // Arrange
-        when(() => mockAuthRepository.login(loginParams)).thenAnswer((_) async => Success(authResponse));
+        when(() => mockAuthRepository.login(loginParams)).thenAnswer((_) async => const Success(authResponse));
 
         // Act
         final result = await usecase.call(loginParams);
@@ -83,7 +93,7 @@ void main() {
 
       test('should call repository with correct parameters', () async {
         // Arrange
-        when(() => mockAuthRepository.login(any())).thenAnswer((_) async => Success(authResponse));
+        when(() => mockAuthRepository.login(any())).thenAnswer((_) async => const Success(authResponse));
 
         // Act
         await usecase.call(loginParams);

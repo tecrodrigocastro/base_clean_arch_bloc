@@ -4,7 +4,7 @@ import 'package:base_clean_arch_bloc/src/app/features/auth/data/models/user_mode
 import 'package:base_clean_arch_bloc/src/app/features/auth/domain/entities/auth_response_entity.dart';
 
 class AuthResponseModel extends AuthResponseEntity {
-  AuthResponseModel({required super.user, required super.token});
+  const AuthResponseModel({required super.user, required super.token});
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{

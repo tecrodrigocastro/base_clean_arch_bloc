@@ -302,12 +302,12 @@ void main() {
 
       testWidgets('should show success snackbar when login succeeds', (tester) async {
         // Arrange
-        final user = UserEntity(
+        const user = UserEntity(
           id: '1',
           email: 'test@example.com',
           name: 'Test User',
         );
-        final authResponse = AuthResponseEntity(user: user, token: 'token');
+        const authResponse = AuthResponseEntity(user: user, token: 'token');
 
         when(() => mockAuthBloc.state).thenReturn(AuthInitial());
 
@@ -316,7 +316,7 @@ void main() {
         await tester.pump();
 
         // Simulate state change to success
-        when(() => mockAuthBloc.state).thenReturn(AuthLoginSuccess(authResponse));
+        when(() => mockAuthBloc.state).thenReturn(const AuthLoginSuccess(authResponse));
         await tester.pump();
 
         // For widget testing, we verify the state handling exists rather than the actual snackbar

@@ -4,7 +4,7 @@ import 'package:base_clean_arch_bloc/src/app/features/auth/domain/entities/user_
 void main() {
   group('UserEntity', () {
     test('should create UserEntity with correct properties', () {
-      final user = UserEntity(
+      const user = UserEntity(
         id: '1',
         email: 'test@example.com',
         name: 'Test User',
@@ -16,13 +16,13 @@ void main() {
     });
 
     test('should be equal when properties are the same', () {
-      final user1 = UserEntity(
+      const user1 = UserEntity(
         id: '1',
         email: 'test@example.com',
         name: 'Test User',
       );
 
-      final user2 = UserEntity(
+      const user2 = UserEntity(
         id: '1',
         email: 'test@example.com',
         name: 'Test User',
@@ -33,13 +33,13 @@ void main() {
     });
 
     test('should not be equal when properties are different', () {
-      final user1 = UserEntity(
+      const user1 = UserEntity(
         id: '1',
         email: 'test@example.com',
         name: 'Test User',
       );
 
-      final user2 = UserEntity(
+      const user2 = UserEntity(
         id: '2',
         email: 'test@example.com',
         name: 'Test User',
@@ -50,7 +50,7 @@ void main() {
     });
 
     test('toString should return correct string representation', () {
-      final user = UserEntity(
+      const user = UserEntity(
         id: '1',
         email: 'test@example.com',
         name: 'Test User',
