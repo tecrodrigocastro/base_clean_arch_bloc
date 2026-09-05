@@ -46,3 +46,18 @@ app.*.map.json
 
 # FVM Version Cache
 .fvm/
+
+# Environment variables
+.env
+
+# Android signing (never commit keystores or credentials)
+android/key.properties
+android/app/upload-keystore.jks
+*.jks
+*.keystore
+
+# iOS / App Store Connect signing
+ios/ExportOptions.plist.local
+*.p8
+*.p12
+*.mobileprovision

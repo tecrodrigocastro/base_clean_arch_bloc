@@ -1,18 +1,23 @@
 name: Flutter CI/CD Pipeline
+
+# Test on every push/PR (cheap, catches regressions early).
+# Build, sign, release and deploy only run for tags matching v*.*.* -
+# creating a release is then a deliberate action ("git tag v1.2.3 && git push --tags"),
+# not a side effect of merging to main.
 on:
   push:
     branches: [main, develop]
+    tags: ['v*.*.*']
   pull_request:
     branches: [main]
-  
-  # Permitir execução manual
   workflow_dispatch:
-    inputs:
-      deploy_to_play_store:
-        description: 'Deploy to Google Play Store'
-        required: true
-        default: false
-        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   FLUTTER_VERSION: '3.24.5'
@@ -20,127 +25,162 @@ env:
 
 jobs:
   test:
-    name: 🧪 Run Tests
+    name: Run Tests
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
     steps:
-      - name: 📚 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: ☕ Setup Java
+      - name: Cache Pub Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('pubspec.lock') }}
+          restore-keys: ${{ runner.os }}-pub-
+
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: ${{ env.JAVA_VERSION }}
 
-      - name: 🐦 Setup Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
 
-      - name: 📦 Install Dependencies
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: 🔍 Analyze Code
+      - name: Analyze Code
         run: flutter analyze
 
-      - name: 🧪 Run Unit Tests
+      - name: Run Unit Tests
         run: flutter test --coverage
 
-      - name: 📊 Upload Coverage to Codecov
+      - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           files: coverage/lcov.info
           fail_ci_if_error: false
 
   build_android:
-    name: 🤖 Build Android
-    needs: test
+    name: Build & Sign Android
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: 📚 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: ☕ Setup Java
+      - name: Cache Pub Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('pubspec.lock') }}
+          restore-keys: ${{ runner.os }}-pub-
+
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: ${{ env.JAVA_VERSION }}
 
-      - name: 🐦 Setup Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
 
-      - name: 📦 Install Dependencies
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: 🔧 Create .env file
+      - name: Create .env File
         run: |
           echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" > .env
           echo "APP_NAME=${{ secrets.APP_NAME }}" >> .env
 
-      - name: 🏗️ Build APK (Debug)
-        run: flutter build apk --debug
+      - name: Setup Signing (decode keystore + create key.properties)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          # Secrets can't be used directly in an "if:" expression, so the check
+          # happens here in the shell instead.
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "KEYSTORE_BASE64 not configured, skipping signing (release build falls back to debug keys)."
+            exit 0
+          fi
 
-      - name: 🏗️ Build APK (Release)
-        run: flutter build apk --release
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
 
-      - name: 🏗️ Build App Bundle (Release)
-        run: flutter build appbundle --release
+          printf 'storeFile=upload-keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+            "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > android/key.properties
 
-      - name: 🔐 Sign App Bundle
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: build/app/outputs/bundle/release/
-          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
+      - name: Build APKs (split per ABI)
+        run: flutter build apk --release --split-per-abi
 
-      - name: 📱 Upload APK Artifact
+      - name: Build App Bundle (Release)
+        run: flutter build appbundle --release --build-number=$((1000 + ${{ github.run_number }}))
+
+      - name: Prepare APK Artifacts
+        run: |
+          mkdir -p artifacts
+          cp build/app/outputs/flutter-apk/*.apk artifacts/
+
+      - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: artifacts/*.apk
           retention-days: 30
 
-      - name: 📱 Upload Debug APK Artifact
+      - name: Upload App Bundle Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 7
-
-      - name: 📱 Upload Signed App Bundle Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: signed-app-bundle
-          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          name: release-bundle
+          path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
 
-  deploy_play_store:
-    name: 🚀 Deploy to Google Play Store
+  release:
+    name: Create GitHub Release
     needs: build_android
     runs-on: ubuntu-latest
-    if: |
-      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
-      (github.event_name == 'workflow_dispatch' && inputs.deploy_to_play_store == true)
+    if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: 📚 Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: 📥 Download Signed App Bundle
+      - name: Download APK Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: signed-app-bundle
+          name: release-apk
+          path: ./artifacts/
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          tag: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          artifacts: ./artifacts/*.apk
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy_play_store:
+    name: Deploy to Google Play Store
+    needs: build_android
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download App Bundle Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-bundle
           path: ./bundle/
 
-      - name: 🚀 Upload to Play Store (Internal Testing)
+      - name: Upload to Play Store (Internal Testing)
         uses: r0adkll/upload-google-play@v1.1.3
         with:
           serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
@@ -151,121 +191,89 @@ jobs:
           inAppUpdatePriority: 0
 
   build_ios:
-    name: 🍎 Build iOS
-    needs: test
+    name: Build & Upload iOS (TestFlight)
     runs-on: macos-latest
-    if: github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: 📚 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 🐦 Setup Flutter
+      - name: Cache Pub Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('pubspec.lock') }}
+          restore-keys: ${{ runner.os }}-pub-
+
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
 
-      - name: 📦 Install Dependencies
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: 🔧 Create .env file
+      - name: Create .env File
         run: |
           echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" > .env
           echo "APP_NAME=${{ secrets.APP_NAME }}" >> .env
 
-      - name: 🍎 Install Apple Certificate and Provisioning Profile
+      - name: Setup App Store Connect API Key
         env:
-          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
-          P12_PASSWORD: ${{ secrets.IOS_BUILD_CERTIFICATE_PASSWORD }}
-          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.MOBILEPROVISION_BASE64 }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
         run: |
-          # Create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          if [ -z "$ASC_KEY_BASE64" ]; then
+            echo "APP_STORE_CONNECT_API_KEY_BASE64 not configured, aborting iOS build."
+            exit 1
+          fi
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-          # Import certificate and provisioning profile from secrets
-          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
-          echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode --output $PP_PATH
-
-          # Create temporary keychain
-          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-
-          # Import certificate to keychain
-          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH
-
-          # Apply provisioning profile
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
-
-      - name: 🏗️ Build iOS App
+      - name: Prepare Build (pods, Generated.xcconfig, assets)
         run: flutter build ios --release --no-codesign
 
-      - name: 🏗️ Build iOS Archive
-        run: |
-          cd ios
-          xcodebuild -workspace Runner.xcworkspace \
-                     -scheme Runner \
-                     -configuration Release \
-                     -destination generic/platform=iOS \
-                     -archivePath build/Runner.xcarchive \
-                     archive
-
-      - name: 📱 Upload iOS Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-archive
-          path: ios/build/Runner.xcarchive
-          retention-days: 30
-
-      - name: 🧹 Clean up Keychain and Provisioning Profile
-        if: ${{ always() }}
-        run: |
-          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
-          rm ~/Library/MobileDevice/Provisioning\ Profiles/build_pp.mobileprovision
-
-  release:
-    name: 📦 Create Release
-    needs: build_android
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    steps:
-      - name: 📚 Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: 📥 Download APK Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: release-apk
-          path: ./artifacts/
-
-      - name: 🏷️ Generate Release Tag
-        id: tag
-        run: |
-          echo "tag=v$(date +'%Y.%m.%d')-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
-
-      - name: 📦 Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          name: Release ${{ steps.tag.outputs.tag }}
-          body: |
-            🚀 **Auto-generated release from CI/CD pipeline**
-            
-            📱 **APK Download**: Download the APK file from the assets below
-            🔧 **Build**: ${{ github.sha }}
-            📅 **Date**: $(date +'%Y-%m-%d %H:%M:%S')
-            
-            ## Changes
-            ${{ github.event.head_commit.message }}
-          files: |
-            ./artifacts/app-release.apk
-          draft: false
-          prerelease: false
+      # No certificate/provisioning profile secrets needed: passing the App Store
+      # Connect API key straight to xcodebuild with -allowProvisioningUpdates lets
+      # Apple's servers issue the distribution certificate and provisioning profile
+      # on demand, even on a clean runner with no local Apple ID/account.
+      - name: Archive (xcodebuild)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+        run: |
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner \
+            -configuration Release -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            archive
+
+      - name: Export IPA (app-store-connect)
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -exportPath build/ios/ipa \
+            -exportOptionsPlist ios/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Upload IPA to App Store Connect (TestFlight)
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+        run: |
+          xcrun altool --upload-app --type ios \
+            -f build/ios/ipa/*.ipa \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"
