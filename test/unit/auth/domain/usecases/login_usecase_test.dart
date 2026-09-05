@@ -20,6 +20,10 @@ void main() {
     late MockAuthRepository mockAuthRepository;
     late MockSessionService mockSessionService;
 
+    setUpAll(() {
+      registerFallbackValue(LoginParams.empty());
+    });
+
     setUp(() {
       mockAuthRepository = MockAuthRepository();
       mockSessionService = MockSessionService();

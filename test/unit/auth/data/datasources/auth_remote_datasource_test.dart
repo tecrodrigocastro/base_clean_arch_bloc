@@ -4,6 +4,7 @@ import 'package:base_clean_arch_bloc/src/core/client_http/rest_client_exception.
 import 'package:base_clean_arch_bloc/src/core/client_http/rest_client_interface.dart';
 import 'package:base_clean_arch_bloc/src/core/client_http/rest_client_request.dart';
 import 'package:base_clean_arch_bloc/src/core/client_http/rest_client_response.dart';
+import 'package:base_clean_arch_bloc/src/core/utils/endpoints.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -56,7 +57,7 @@ void main() {
         final captured = verify(() => mockRestClient.post(captureAny())).captured;
         final request = captured.first as RestClientRequest;
 
-        expect(request.path, equals('https://127.0.0.1:8000/api/auth/login'));
+        expect(request.path, equals(Endpoints.login));
         expect(request.data, equals(loginParams.toJson()));
       });
 

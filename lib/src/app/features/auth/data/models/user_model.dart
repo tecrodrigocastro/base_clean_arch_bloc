@@ -14,11 +14,15 @@ class UserModel extends UserEntity {
   }
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
-    return UserModel(
-      id: map['id'] as String,
-      email: map['email'] as String,
-      name: map['name'] as String,
-    );
+    try {
+      return UserModel(
+        id: map['id'] as String,
+        email: map['email'] as String,
+        name: map['name'] as String,
+      );
+    } catch (e, stackTrace) {
+      throw Exception('Error parsing UserModel: $e\nStack trace: $stackTrace');
+    }
   }
 
   String toJson() => json.encode(toMap());
