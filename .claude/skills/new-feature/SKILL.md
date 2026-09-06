@@ -7,6 +7,30 @@ description: Scaffold a complete feature (domain, data, presentation, DI wiring,
 
 Generates every layer of a feature the same way `auth` is built - use `auth` (`lib/src/app/features/auth/`) as the live reference whenever a template below is ambiguous. Naming and modifier rules are in `.claude/rules/naming-conventions.md`; layer boundaries are in `.claude/rules/architecture.md`. Read both before generating files if this is the first feature you're scaffolding in a session.
 
+## Step 0: run the Mason brick first
+
+Don't hand-write the boilerplate below from scratch - `bricks/feature/` is a Mason brick that generates it in one shot (entity, DTO, repository interface/impl, usecase, validator, model, datasource, bloc+event+state, matching tests, and optionally a page). Run:
+
+```bash
+mason get   # once per clone, registers bricks/feature/ from mason.yaml
+mason make feature \
+  --feature_name product \
+  --action_name create \
+  --fields "id:String,name:String,price:double" \
+  --generate_page \
+  -o .
+```
+
+Notes:
+- `entity_name` defaults to `feature_name` - only pass `--entity_name` when the entity is named differently (e.g. feature `auth`, entity `user`/`auth_response`).
+- `fields` is `name:type,name:type`; supported types get sensible empty/sample values in the generated tests (`String`, `int`, `double`, `num`, `bool` - anything else falls back to `null`, which only works for nullable fields).
+- Booleans need an explicit value on the CLI: pass `--generate_page` to include a page, or `--generate_page false` to skip it (omitting the flag entirely triggers an interactive prompt, which fails in non-interactive shells).
+- The brick's validator only adds `.notEmpty()` rules for `String` fields - add custom rules for numeric/bool fields by hand afterward.
+- The generated repository interface/usecase/bloc cover exactly one action. For a second action on the same feature (e.g. `getAll` alongside `create`), re-run `mason make feature` with the new `--action_name` and answer "skip" when prompted about conflicts on `{feature}_entity.dart`/`{feature}_repository_interface.dart`/`{feature}_bloc.dart` - then manually add the new method to the repository interface/impl and the new event/state to the bloc, following the shape the brick already generated for the first action.
+- `flutter analyze` and `flutter test` are guaranteed clean for the field types above - this was verified end-to-end before the brick was committed.
+
+Everything from here down documents what the brick generates (and how to extend it by hand) - read it when the brick's output needs adjusting, when scaffolding a second action, or when the feature doesn't fit the brick's shape (e.g. no HTTP datasource).
+
 ## Before writing anything
 
 Ask (or infer from context) if unclear:

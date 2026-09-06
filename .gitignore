@@ -47,6 +47,10 @@ app.*.map.json
 # FVM Version Cache
 .fvm/
 
+# Mason local brick cache
+.mason/
+bricks/**/hooks/build/
+
 # Environment variables
 .env
 
