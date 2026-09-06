@@ -128,6 +128,12 @@ flutter build web      # Web
 
 ## Using this template for a new project
 
+This repo is a [GitHub template repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template) - use the "Use this template" button on GitHub, or via the CLI:
+
+```bash
+gh repo create my-app --template tecrodrigocastro/base_clean_arch_bloc
+```
+
 1. Clone/copy the repo and rename the package (`pubspec.yaml`, `applicationId`/`namespace` in `android/app/build.gradle`, iOS bundle identifier).
 2. Delete or replace the `auth` feature's content with your own first feature, keeping the same folder/file shape.
 3. Update `CLAUDE.md` with anything project-specific once it diverges from this template.
