@@ -2,7 +2,7 @@
 
 Flutter template implementing Clean Architecture (Robert C. Martin) with BLoC for state management. It exists to be cloned/copied as a starting point for new apps, not to grow into a product itself - the `auth` feature is the reference implementation every new feature should imitate.
 
-Detailed conventions live in `.claude/rules/` and are loaded automatically. The `new-feature` skill (`.claude/skills/new-feature/`) scaffolds a complete feature end-to-end - prefer it over writing a feature by hand.
+Detailed conventions live in `.claude/rules/` and are loaded automatically. The `new-feature` skill (`.claude/skills/new-feature/`) scaffolds a complete feature end-to-end - prefer it over writing a feature by hand. It runs on top of the `bricks/feature/` Mason brick (`mason get` once, then `mason make feature`), which generates the boilerplate directly - see the skill for the full command and what to do beyond it (DI wiring, a second action, etc).
 
 ## Stack
 

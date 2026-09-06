@@ -8,6 +8,18 @@ Este repositório foi feito para ser clonado/copiado como ponto de partida de um
 
 > **Trabalhando com assistentes de IA**: este projeto já vem com um `CLAUDE.md`, `.claude/rules/` e uma skill de scaffolding em `.claude/skills/new-feature/`, para que o Claude Code (ou qualquer assistente que leia `CLAUDE.md`) já conheça a arquitetura, as convenções de nomenclatura e saiba gerar uma feature nova de ponta a ponta.
 
+### Scaffolding de features
+
+Novas features seguem a mesma estrutura domain/data/presentation da `auth`. Em vez de copiar arquivos manualmente, gere uma com o [Mason](https://pub.dev/packages/mason_cli):
+
+```bash
+dart pub global activate mason_cli
+mason get   # uma vez por clone, registra o bricks/feature/ a partir do mason.yaml
+mason make feature --feature_name product --action_name create --fields "id:String,name:String,price:double" -o .
+```
+
+Isso gera a entity, o DTO, a interface/implementação do repositório, o usecase, o validator, o model, o datasource, o BLoC (+event/state) e os testes correspondentes para essa ação. Adicione `--generate_page` para também gerar uma página. Conectar a nova feature em `lib/src/core/DI/dependency_injector.dart` continua sendo manual - veja o bloco da `auth` lá para saber o formato a seguir.
+
 ## Arquitetura
 
 ```

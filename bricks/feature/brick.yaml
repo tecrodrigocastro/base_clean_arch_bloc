@@ -1,0 +1,36 @@
+name: feature
+description: >-
+  Scaffolds a Clean Architecture + BLoC feature (domain, data, presentation,
+  tests) matching this repo's conventions - see lib/src/app/features/auth
+  as the reference implementation and .claude/rules/ for the rules it follows.
+version: 0.1.0
+environment:
+  mason: ">=0.1.0-dev <0.2.0"
+
+vars:
+  feature_name:
+    type: string
+    description: Feature name in snake_case, e.g. product, order.
+    prompt: Feature name (snake_case)
+  entity_name:
+    type: string
+    description: Entity name in snake_case. Leave blank to reuse feature_name.
+    default: ""
+    prompt: Entity name (snake_case, blank = same as feature_name)
+  action_name:
+    type: string
+    description: Primary action in camelCase, e.g. create, getAll, login.
+    default: "create"
+    prompt: Action name (camelCase)
+  fields:
+    type: string
+    description: >-
+      Comma-separated name:type pairs for the entity/params,
+      e.g. "id:String,name:String,price:double".
+    default: "id:String,name:String"
+    prompt: Fields as "name:type,name:type"
+  generate_page:
+    type: boolean
+    description: Generate a presentation page for this feature?
+    default: false
+    prompt: Generate a page?

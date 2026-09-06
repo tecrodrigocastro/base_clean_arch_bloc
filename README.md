@@ -8,6 +8,18 @@ This repo is meant to be cloned/copied as the starting point for a new app, not 
 
 > **Working with AI assistants**: this project ships a `CLAUDE.md`, `.claude/rules/` and a `.claude/skills/new-feature/` scaffolding skill so Claude Code (or any assistant that reads `CLAUDE.md`) already knows the architecture, naming conventions and how to generate a new feature end-to-end.
 
+### Feature scaffolding
+
+New features follow the same domain/data/presentation shape as `auth`. Instead of copying files by hand, generate one with [Mason](https://pub.dev/packages/mason_cli):
+
+```bash
+dart pub global activate mason_cli
+mason get   # once per clone, registers bricks/feature/ from mason.yaml
+mason make feature --feature_name product --action_name create --fields "id:String,name:String,price:double" -o .
+```
+
+This generates the entity, DTO, repository interface/impl, usecase, validator, model, datasource, BLoC (+event/state) and matching tests for that one action. Add `--generate_page` to also generate a page. Wiring the new feature into `lib/src/core/DI/dependency_injector.dart` is still a manual step - see the `auth` block there for the shape to follow.
+
 ## Architecture
 
 ```

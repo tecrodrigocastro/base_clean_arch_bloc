@@ -1,0 +1,46 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:{{package_name}}/src/app/features/{{feature_name}}/domain/dtos/{{action_name}}_params.dart';
+import 'package:{{package_name}}/src/app/features/{{feature_name}}/presentation/bloc/{{feature_name}}_bloc.dart';
+import 'package:{{package_name}}/src/core/DI/dependency_injector.dart';
+import 'package:{{package_name}}/src/core/utils/show_snack_bar.dart';
+
+class {{#pascalCase}}{{feature_name}}{{/pascalCase}}Page extends StatefulWidget {
+  const {{#pascalCase}}{{feature_name}}{{/pascalCase}}Page({super.key});
+
+  @override
+  State<{{#pascalCase}}{{feature_name}}{{/pascalCase}}Page> createState() => _{{#pascalCase}}{{feature_name}}{{/pascalCase}}PageState();
+}
+
+class _{{#pascalCase}}{{feature_name}}{{/pascalCase}}PageState extends State<{{#pascalCase}}{{feature_name}}{{/pascalCase}}Page> {
+  final _params = {{#pascalCase}}{{action_name}}{{/pascalCase}}Params.empty();
+  final _bloc = injector<{{#pascalCase}}{{feature_name}}{{/pascalCase}}Bloc>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('{{#pascalCase}}{{feature_name}}{{/pascalCase}}')),
+      body: BlocListener<{{#pascalCase}}{{feature_name}}{{/pascalCase}}Bloc, {{#pascalCase}}{{feature_name}}{{/pascalCase}}State>(
+        bloc: _bloc,
+        listener: (context, state) {
+          if (state is {{#pascalCase}}{{feature_name}}{{/pascalCase}}{{#pascalCase}}{{action_name}}{{/pascalCase}}Failure) {
+            showMessageSnackBar(context, state.exception.message, icon: Icons.error, iconColor: Colors.red);
+          }
+        },
+        child: BlocBuilder<{{#pascalCase}}{{feature_name}}{{/pascalCase}}Bloc, {{#pascalCase}}{{feature_name}}{{/pascalCase}}State>(
+          bloc: _bloc,
+          builder: (context, state) {
+            return Center(
+              child: ElevatedButton(
+                onPressed: () => _bloc.add({{#pascalCase}}{{feature_name}}{{/pascalCase}}{{#pascalCase}}{{action_name}}{{/pascalCase}}Requested(params: _params)),
+                child: state is {{#pascalCase}}{{feature_name}}{{/pascalCase}}Loading
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('{{#pascalCase}}{{action_name}}{{/pascalCase}}'),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
