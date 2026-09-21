@@ -43,6 +43,8 @@ flutter run
 
 CI/CD is documented in `.github/README_CICD.md`. Tests run on every push/PR; build+release+deploy only run on `v*.*.*` tags.
 
+The app is wired up for [Marionette MCP](https://github.com/leancodepl/marionette_mcp) (`MarionetteBinding` in `lib/main.dart`, debug-only) - after `flutter run`, an agent can connect to the printed `ws://` VM service URI and drive the running app (tap, enter text, screenshot, `get_logs`) to verify a UI change actually works, instead of only relying on `flutter analyze`/`flutter test`.
+
 ## Non-negotiables
 
 - **Dependency Rule**: `presentation -> domain <- data <- infrastructure`. `domain/` never imports Flutter, `dio`, or any other layer.
