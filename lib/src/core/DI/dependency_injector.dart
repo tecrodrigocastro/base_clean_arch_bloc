@@ -10,10 +10,13 @@ import 'package:base_clean_arch_bloc/src/core/client_http/dio/rest_client_dio_im
 import 'package:base_clean_arch_bloc/src/core/client_http/logger/client_interceptor_logger_impl.dart';
 import 'package:base_clean_arch_bloc/src/core/services/session_service.dart';
 import 'package:get_it/get_it.dart';
+import 'package:logger/logger.dart';
 
 final injector = GetIt.instance;
 
-void setupDependencyInjector({bool loggerApi = false, bool useMocks = true}) {
+void setupDependencyInjector({bool loggerApi = false, bool useMocks = true, Logger? logger}) {
+  injector.registerLazySingleton<Logger>(() => logger ?? Logger());
+
   injector.registerFactory<RestClientDioImpl>(() {
     final instance = RestClientDioImpl(
       dio: DioFactory.dio(),

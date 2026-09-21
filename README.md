@@ -86,6 +86,9 @@ Full conventions (naming table, SOLID mapping, dependency rule) live in `.claude
 **UI**
 - `gap`, `shimmer`
 
+**AI-driven runtime testing**
+- `marionette_flutter`, `marionette_logger` - lets an AI agent (Claude Code, Cursor, etc.) drive the running app: inspect the widget tree, tap, enter text, scroll, screenshot, and read logs. See [AI-driven runtime testing](#ai-driven-runtime-testing) below.
+
 ## Key patterns
 
 - **Result pattern**: repository and usecase methods return `AsyncResult<T>` (`result_dart`); only the data layer catches exceptions and converts them into `BaseException` subclasses.
@@ -102,6 +105,18 @@ flutter test test/unit/         # unit tests only
 flutter test test/widget/       # widget tests only
 flutter test --coverage
 ```
+
+## AI-driven runtime testing
+
+The app is wired up for [Marionette MCP](https://github.com/leancodepl/marionette_mcp) - `MarionetteBinding` is initialized in `lib/main.dart` (debug builds only), with app logs (via `package:logger`) forwarded to it so an agent's `get_logs` call returns real signal. To drive the app:
+
+```bash
+dart pub global activate marionette_mcp
+claude mcp add --transport stdio marionette -- marionette_mcp   # or your agent's equivalent
+flutter run   # copy the ws://... VM service URI from the console
+```
+
+Then ask your agent to connect using that URI and interact with the app (tap buttons, enter text, read logs, take screenshots). See the [Marionette docs](https://github.com/leancodepl/marionette_mcp/blob/main/docs/getting-started.md) for the full tool reference and the [Configuration guide](https://github.com/leancodepl/marionette_mcp/blob/main/docs/configuration.md) if you introduce a custom design system (standard Material widgets work with no extra setup).
 
 ## Getting started
 

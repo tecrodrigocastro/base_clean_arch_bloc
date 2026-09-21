@@ -86,6 +86,9 @@ As convenções completas (tabela de nomenclatura, mapeamento de SOLID, regra de
 **UI**
 - `gap`, `shimmer`
 
+**Testes guiados por IA em runtime**
+- `marionette_flutter`, `marionette_logger` - permite que um agente de IA (Claude Code, Cursor, etc.) interaja com o app rodando: inspecionar a árvore de widgets, tocar, digitar, rolar, tirar screenshot e ler logs. Veja [Testes guiados por IA em runtime](#testes-guiados-por-ia-em-runtime) abaixo.
+
 ## Padrões-chave
 
 - **Result pattern**: métodos de repositório e usecase retornam `AsyncResult<T>` (`result_dart`); só a camada de dados captura exceções e as converte em subclasses de `BaseException`.
@@ -102,6 +105,18 @@ flutter test test/unit/         # apenas testes unitários
 flutter test test/widget/       # apenas testes de widget
 flutter test --coverage
 ```
+
+## Testes guiados por IA em runtime
+
+O app já está preparado para o [Marionette MCP](https://github.com/leancodepl/marionette_mcp) - o `MarionetteBinding` é inicializado em `lib/main.dart` (só em builds de debug), com os logs do app (via `package:logger`) encaminhados pra ele, pra que o `get_logs` do agente retorne sinal de verdade. Pra interagir com o app:
+
+```bash
+dart pub global activate marionette_mcp
+claude mcp add --transport stdio marionette -- marionette_mcp   # ou o equivalente do seu agente
+flutter run   # copie a URI ws://... do VM service que aparece no console
+```
+
+Depois é só pedir pro agente conectar usando essa URI e interagir com o app (tocar botões, digitar, ler logs, tirar screenshots). Veja os [docs do Marionette](https://github.com/leancodepl/marionette_mcp/blob/main/docs/getting-started.md) pra referência completa das tools e o [guia de configuração](https://github.com/leancodepl/marionette_mcp/blob/main/docs/configuration.md) caso você use um design system customizado (widgets Material padrão funcionam sem configuração extra).
 
 ## Começando
 
