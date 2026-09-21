@@ -1,12 +1,21 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
+
+import 'package:logger/logger.dart';
 
 import '../client_http.dart';
 
 const JsonEncoder _encoder = JsonEncoder.withIndent('  ');
 
+/// Loga request/response/erro de toda chamada HTTP através do [Logger]
+/// compartilhado da DI (em vez de `dart:developer`'s `log()`) para que esses
+/// logs também cheguem ao `get_logs` do Marionette MCP quando um agente
+/// estiver conectado — ver `lib/main.dart`.
 class ClientInterceptorLoggerImpl implements IClientInterceptor {
+  ClientInterceptorLoggerImpl({required Logger logger}) : _logger = logger;
+
+  final Logger _logger;
+
   @override
   FutureOr<RestClientHttpMessage> onError(RestClientException err) {
     final loggerString = <String>[
@@ -28,7 +37,7 @@ class ClientInterceptorLoggerImpl implements IClientInterceptor {
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
     ].join('\n');
 
-    log(loggerString);
+    _logger.e(loggerString);
     return err;
   }
 
@@ -46,7 +55,7 @@ class ClientInterceptorLoggerImpl implements IClientInterceptor {
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
     ].join('\n');
 
-    log(loggerString);
+    _logger.i(loggerString);
     return request;
   }
 
@@ -61,7 +70,7 @@ class ClientInterceptorLoggerImpl implements IClientInterceptor {
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
     ].join('\n');
 
-    log(loggerString);
+    _logger.i(loggerString);
     return response;
   }
 

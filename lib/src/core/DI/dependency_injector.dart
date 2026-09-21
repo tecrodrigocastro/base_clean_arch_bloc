@@ -27,7 +27,7 @@ void setupDependencyInjector({bool loggerApi = false, bool useMocks = true, Logg
     ));
 
     if (loggerApi) {
-      instance.addInterceptors(ClientInterceptorLoggerImpl());
+      instance.addInterceptors(ClientInterceptorLoggerImpl(logger: injector<Logger>()));
     }
 
     return instance;
