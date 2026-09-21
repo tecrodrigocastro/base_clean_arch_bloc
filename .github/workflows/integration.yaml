@@ -20,7 +20,11 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: '3.24.5'
+  # marionette_flutter/marionette_logger exigem Flutter >=3.27.0 (Dart SDK
+  # >=3.6.0) em toda versão publicada — abaixo disso o "flutter pub get"
+  # falha na resolução de dependências. Pinado na mesma versão validada
+  # localmente (flutter analyze/flutter test) ao adicionar o Marionette MCP.
+  FLUTTER_VERSION: '3.44.8'
   JAVA_VERSION: '17'
 
 jobs:
